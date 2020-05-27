@@ -5,26 +5,36 @@ try:
     def deleteEmptyNulls():             
         grpsToDelete=[]
         allSiblings=[]        
-        emptyGrps=[i for i in pm.ls(transforms=True,leaf=True,exactType="transform") if i.getChildren != []\
-        and i.listConnections() == []]
-    
+        emptyGrps=[]
+        for i in pm.ls(transforms=True,leaf=True,exactType="transform"):
+            boundig=i.getBoundingBoxInvisible() 
+            area=6*(boundig[3]-boundig[0]**2)
+
+            if i.getChildren != [] and i.listConnections() == []:
+                emptyGrps.append(i)
+
+            elif area == 0:
+                emptyGrps.append(i)
+                    
         def getFirstEmptyGrp(transNode):
             parentGrp=transNode.getParent()
             siblingsGrp=transNode.getSiblings()
             
-            if siblingsGrp != []:
-                matches=[x for x in siblingsGrp if x in allSiblings]    
-                if len(matches)== len(siblingsGrp):
-                    for sibling in matches:
-                        grpsToDelete.remove(sibling)
+            if parentGrp != None:
+                if siblingsGrp != []:
+                    matches=[x for x in siblingsGrp if x in allSiblings]    
+                    if len(matches)== len(siblingsGrp):
+                        getFirstEmptyGrp(parentGrp)
+                        for sibling in matches:
+                            grpsToDelete.remove(sibling)                       
+                    else: 
+                        grpsToDelete.append(transNode)                           
+                        allSiblings.append(transNode)            
+                else:
                     getFirstEmptyGrp(parentGrp)
-                    
-                else: 
-                    grpsToDelete.append(transNode)                           
-                    allSiblings.append(transNode)            
             else:
-                getFirstEmptyGrp(parentGrp)
-                                  
+                grpsToDelete.append(transNode)
+                                
         for i in emptyGrps:
             getFirstEmptyGrp(i)
             
@@ -34,5 +44,3 @@ finally:
     cmds.undoInfo(closeChunk=True) 
               
 deleteEmptyNulls()
-        
-    
